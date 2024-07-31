@@ -33,6 +33,7 @@ func logInit() {
 }
 
 func main() {
+	logInit()
 	jsonInputFile, err := os.Open(jsonInputFilename)
 	if err != nil {
 		log.Fatalf("Can't open json input file %v: %v\n", jsonInputFilename, err)
@@ -58,14 +59,11 @@ func main() {
 			key = strings.TrimSpace(key)
 		}
 
-		//keyParts := strings.Split(key, "_")
-		//dataType := keyParts[0]
-
 		for dataType, v := range value {
 			//In the transformation instruction, **N** denotes the value's data type, and the sanitize of trailing and leading whitespace is only defined to "value"
 			//So whitespace in dataType is not processed and considered illegal.
 			//For example, "null_1": { "NULL ": "true"} should be considered illegal.
-			//But in the sample output it is included, so we process the trailing zero for data type as well.
+			//But in the sample output it is included, so I process the trailing zero for data type as well.
 			dataType := strings.TrimSpace(dataType)
 
 			switch dataType {
@@ -97,7 +95,7 @@ func main() {
 						jsonResultMap[key] = result
 					}
 				}
-			case "M": //TODO: need to update after map implemented.
+			case "M":
 				switch m := v.(type) {
 				case map[string]any:
 					matched, result := processMap(m)
@@ -109,9 +107,13 @@ func main() {
 		}
 
 	}
-	//map is sorted in fmt print.
-	fmt.Println(jsonResultMap)
-
+	//Map is always sorted in fmt print.
+	log.Println(jsonResultMap)
+	mapJson, err := json.Marshal(jsonResultMap)
+	if err != nil {
+		log.Fatalf("Error occurs while marshalling map %v to json: %v\n", jsonResultMap, err)
+	}
+	fmt.Println(string(mapJson))
 }
 
 func processNumber(value any) (bool, any) {
@@ -186,9 +188,9 @@ func processNull(value any) (bool, string) {
 func processList(values []any) (bool, []any) {
 	var final []any
 	for _, item := range values {
-		switch item.(type) {
+		switch item := item.(type) {
 		case map[string]any:
-			for dataType, v := range item.(map[string]any) {
+			for dataType, v := range item {
 				dataType := strings.TrimSpace(dataType)
 
 				switch dataType {
@@ -220,10 +222,8 @@ func processList(values []any) (bool, []any) {
 
 func processMap(values map[string]any) (bool, map[string]any) {
 	final := make(map[string]any)
-	//fmt.Println(values)
-	var keys []string
+
 	for k, value := range values {
-		keys = append(keys, k)
 		switch value.(type) {
 		case map[string]any:
 			for dataType, v := range value.(map[string]any) {
