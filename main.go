@@ -62,35 +62,44 @@ func main() {
 		//dataType := keyParts[0]
 
 		for dataType, v := range value {
+			//In the transformation instruction, **N** denotes the value's data type, and the sanitize of trailing and leading whitespace is only defined to "value"
+			//So whitespace in dataType is not processed and considered illegal.
+			//For example, "null_1": { "NULL ": "true"} should be considered illegal.
+			//But in the sample output it is included, so we process the trailing zero for data type as well.
+			dataType := strings.TrimSpace(dataType)
+
 			switch dataType {
 			case "S":
-				//fmt.Println(key, value)
-
 				matched, str := processString(v)
 				if matched {
 					jsonResultMap[key] = str
 				}
-
 			case "N":
-
 				matched, num := processNumber(v)
 				if matched {
 					jsonResultMap[key] = num
 				}
-
 			case "BOOL":
-
 				matched, b := processBoolean(v)
 				if matched {
 					jsonResultMap[key] = b
 				}
+			case "NULL":
+				matched, n := processNull(v)
+				if matched {
+					jsonResultMap[key] = n
+				}
+			case "L":
+				switch l := v.(type) {
+				case []any:
+					matched, l := processList(l)
+					if matched {
+						jsonResultMap[key] = l
+					}
+				}
 
-			case "null":
-				fmt.Println(key, value)
-			case "list":
-				fmt.Println(key, value)
-			case "map":
-				fmt.Println(key, value)
+			case "M":
+				fmt.Println(key, v)
 			}
 		}
 
@@ -152,5 +161,70 @@ func processBoolean(value any) (bool, bool) {
 		return true, false
 	} else {
 		return false, false
+	}
+}
+
+func processNull(value any) (bool, string) {
+	b := strings.TrimSpace(value.(string))
+
+	if b == "1" || b == "t" || b == "T" || b == "TRUE" || b == "true" || b == "True" {
+		return true, "null"
+	} else if b == "0" || b == "f" || b == "F" || b == "FALSE" || b == "false" || b == "False" {
+		return false, ""
+	} else {
+		return false, ""
+	}
+}
+
+func processList(values []any) (bool, []any) {
+	var final []any
+	for _, item := range values {
+		fmt.Println("list: ", item)
+		switch item.(type) {
+		case map[string]any:
+			for dataType, v := range item.(map[string]any) {
+				dataType := strings.TrimSpace(dataType)
+
+				switch dataType {
+				case "S":
+					matched, str := processString(v)
+					if matched {
+						final = append(final, str)
+					}
+				case "N":
+					matched, num := processNumber(v)
+					if matched {
+						final = append(final, num)
+					}
+				case "BOOL":
+					matched, b := processBoolean(v)
+					if matched {
+						final = append(final, b)
+					}
+				case "NULL":
+					matched, n := processNull(v)
+					if matched {
+						final = append(final, n)
+					}
+				case "L":
+					switch l := v.(type) {
+					case []any:
+						matched, l := processList(l)
+						if matched {
+							final = append(final, l)
+						}
+					}
+
+				case "M":
+					fmt.Println(v)
+				}
+			}
+		}
+
+	}
+	if len(final) > 0 {
+		return true, final
+	} else {
+		return false, []any{}
 	}
 }
