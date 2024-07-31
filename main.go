@@ -26,10 +26,10 @@ func logInit() {
 	formatter.DisableTimestamp = false
 	log.SetFormatter(formatter)
 
-	//TODO:: TEST:: need to set to Info when running
-	//log.Level = logrus.WarnLevel
+	//Please set to Warn when running
+	log.Level = logrus.WarnLevel
 	//log.Level = logrus.InfoLevel
-	log.Level = logrus.DebugLevel
+	//log.Level = logrus.DebugLevel
 }
 
 func main() {
@@ -48,7 +48,7 @@ func main() {
 	var jsonInputMap map[string]map[string]any
 	json.Unmarshal(jsonBytes, &jsonInputMap)
 
-	log.Println(jsonInputMap)
+	log.Debugln(jsonInputMap)
 
 	jsonResultMap := make(map[string]any)
 
@@ -108,7 +108,7 @@ func main() {
 
 	}
 	//Map is always sorted in fmt print.
-	log.Println(jsonResultMap)
+	log.Debugln(jsonResultMap)
 	mapJson, err := json.Marshal(jsonResultMap)
 	if err != nil {
 		log.Fatalf("Error occurs while marshalling map %v to json: %v\n", jsonResultMap, err)
