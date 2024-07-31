@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	jsonInputFilename = "input2.json"
+	jsonInputFilename = "input.json"
 )
 
 var log = logrus.New()
@@ -92,19 +92,26 @@ func main() {
 			case "L":
 				switch l := v.(type) {
 				case []any:
-					matched, l := processList(l)
+					matched, result := processList(l)
 					if matched {
-						jsonResultMap[key] = l
+						jsonResultMap[key] = result
 					}
 				}
-
-			case "M":
-				fmt.Println(key, v)
+			case "M": //TODO: need to update after map implemented.
+				switch m := v.(type) {
+				case map[string]any:
+					matched, result := processMap(m)
+					if matched {
+						jsonResultMap[key] = result
+					}
+				}
 			}
 		}
 
 	}
+	//map is sorted in fmt print.
 	fmt.Println(jsonResultMap)
+
 }
 
 func processNumber(value any) (bool, any) {
@@ -179,7 +186,6 @@ func processNull(value any) (bool, string) {
 func processList(values []any) (bool, []any) {
 	var final []any
 	for _, item := range values {
-		fmt.Println("list: ", item)
 		switch item.(type) {
 		case map[string]any:
 			for dataType, v := range item.(map[string]any) {
@@ -201,30 +207,72 @@ func processList(values []any) (bool, []any) {
 					if matched {
 						final = append(final, b)
 					}
-				case "NULL":
-					matched, n := processNull(v)
-					if matched {
-						final = append(final, n)
-					}
-				case "L":
-					switch l := v.(type) {
-					case []any:
-						matched, l := processList(l)
-						if matched {
-							final = append(final, l)
-						}
-					}
-
-				case "M":
-					fmt.Println(v)
 				}
 			}
 		}
-
 	}
 	if len(final) > 0 {
 		return true, final
 	} else {
 		return false, []any{}
+	}
+}
+
+func processMap(values map[string]any) (bool, map[string]any) {
+	final := make(map[string]any)
+	//fmt.Println(values)
+	var keys []string
+	for k, value := range values {
+		keys = append(keys, k)
+		switch value.(type) {
+		case map[string]any:
+			for dataType, v := range value.(map[string]any) {
+				dataType := strings.TrimSpace(dataType)
+
+				switch dataType {
+				case "S":
+					matched, str := processString(v)
+					if matched {
+						final[k] = str
+					}
+				case "N":
+					matched, num := processNumber(v)
+					if matched {
+						final[k] = num
+					}
+				case "BOOL":
+					matched, b := processBoolean(v)
+					if matched {
+						final[k] = b
+					}
+				case "NULL":
+					matched, n := processNull(v)
+					if matched {
+						final[k] = n
+					}
+				case "L":
+					switch l := v.(type) {
+					case []any:
+						matched, result := processList(l)
+						if matched {
+							final[k] = result
+						}
+					}
+				case "M":
+					switch m := v.(type) {
+					case map[string]any:
+						matched, result := processMap(m)
+						if matched {
+							final[k] = result
+						}
+					}
+				}
+			}
+		}
+	}
+	if len(final) > 0 {
+		return true, final
+	} else {
+		return false, final
 	}
 }
