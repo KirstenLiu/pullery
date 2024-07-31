@@ -4,7 +4,8 @@
 
 - Execution instructions: I put the input json into file "input.json", the output should be printed directly in STDOUT.
   For execute on replit, please go to: https://replit.com/@kirstenliu/pullery
-  After I import from github (I need to make the repo public, otherwise replit won't let me import), I run the classic "go mod init main" and "go mod tidy" to impot libraries. And then my program can be run on replit without issues.
+  After I import from github (I need to make the repo public, otherwise replit won't let me import), I run the classic "go mod init main" and "go mod tidy" to impot libraries. (Of course, I run related go get for custom libraries, I don't use any besides the logrus.)
+  And then my program can be run on replit without issues.
 - Additional information that may be helpful to the reviewer:
 	1. I also include some useful logs for debug usage, please feel free to change the log level.
 	2. In the transformation instruction, **N** denotes the value's data type, and the sanitize of trailing and leading whitespace is only defined to "value". So by logic from instruction, whitespace in dataType is not processed and considered illegal.
